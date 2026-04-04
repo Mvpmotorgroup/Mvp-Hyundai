@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MVP Hyundai — Inventory Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2333;
+  --border:rgba(255,255,255,0.08);--text:#e8eaf0;--muted:#7b82a0;
+  --accent:#0054A4;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a78bfa;--teal:#2dd4bf;
+  --font:system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'Courier New',monospace;--radius:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.nav-title{font-size:15px;font-weight:600}
+.nav-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.nav-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nav-date{font-size:12px;color:var(--muted);background:var(--surface2);padding:6px 12px;border-radius:6px;border:1px solid var(--border)}
+.badge-live{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--green);display:none}
+.dot-live{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-import{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn-import:hover{opacity:.85}
+/* TABS */
+.tabs{display:flex;gap:4px;padding:12px 24px 0;border-bottom:1px solid var(--border);background:var(--surface)}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+/* LEGEND */
+.legend-bar{display:flex;gap:20px;padding:9px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+/* TAB VIEWS */
+.tab-view{display:none}.tab-view.active{display:block}
+/* FILTERS */
+.filters{display:flex;align-items:center;gap:8px;padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.flabel{font-size:12px;color:var(--muted)}
+.fbtn{padding:5px 12px;font-size:12px;font-weight:500;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.fbtn:hover,.fbtn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fsep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.search{flex:1;max-width:220px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.search:focus{border-color:var(--accent)}
+.search::placeholder{color:var(--muted)}
+/* ALERTS */
+.alerts{padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;min-height:0}
+.alert{display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:7px;padding:7px 12px;font-size:12px;color:#fca5a5}
+.alert-amber{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fcd34d}
+.alert-green{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#4ade80}
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 24px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 24px 14px}
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:14px;padding:0 24px 14px}
+.g2b{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 24px 14px}
+.gpad{padding:0 24px 14px}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.card-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.kpi-value{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:5px}
+.kpi-sub{color:var(--muted);font-size:12px}
+/* AGING BARS */
+.arow{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.alabel{font-size:12px;color:var(--muted);width:68px;flex-shrink:0}
+.atrack{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.afill{height:100%;border-radius:4px;transition:width .5s}
+.acount{font-size:12px;font-weight:500;width:28px;text-align:right}
+.apct{font-size:11px;color:var(--muted);width:32px;text-align:right}
+/* CHART CANVAS */
+.chart-wrap{position:relative;width:100%}
+/* TABLE */
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding:0 24px;margin-bottom:7px}
+.sec-title{font-size:13px;font-weight:500}
+.sec-sub{font-size:12px;color:var(--muted)}
+.tbl-wrap{padding:0 24px 24px}
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;padding:0 10px 9px;border-bottom:1px solid var(--border)}
+.tbl td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.025)}
+.tbl th.sortable{cursor:pointer;user-select:none}
+.tbl th.sortable:hover{color:var(--text)}
+.tbl th.sort-asc::after{content:' ▲';font-size:9px;color:var(--accent)}
+.tbl th.sort-desc::after{content:' ▼';font-size:9px;color:var(--accent)}
+.tbl th:first-child,.tbl td:first-child{padding-left:18px}
+.tbl th:last-child,.tbl td:last-child{padding-right:18px;text-align:right}
+/* ROW HIGHLIGHTS */
+/* PILLS / BADGES */
+.age-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.age-ok{background:rgba(34,197,94,.15);color:#4ade80}
+.age-warn{background:rgba(245,158,11,.15);color:#fbbf24}
+.age-crit{background:rgba(239,68,68,.15);color:#f87171}
+.type-badge{font-size:11px;padding:2px 8px;border-radius:12px;background:rgba(59,130,246,.12);color:#93c5fd}
+.status-badge{display:inline-block;margin-left:6px;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500}
+.sb-safety{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.35)}
+.sb-receipt{background:rgba(245,158,11,.2);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}
+.stock-tag{font-family:var(--mono);font-size:11px;color:var(--muted)}
+/* ACTION BTNS */
+.act-red{padding:3px 9px;font-size:11px;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);border-radius:5px;cursor:pointer;font-family:inherit}
+.act-amber{padding:3px 9px;font-size:11px;background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);border-radius:5px;cursor:pointer;font-family:inherit}
+.act-blue{padding:3px 9px;font-size:11px;background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.22);border-radius:5px;cursor:pointer;font-family:inherit}
+/* EMPTY STATE */
+.empty{text-align:center;padding:52px 20px;color:var(--muted)}
+.empty-icon{font-size:38px;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:5px}
+.empty-sub{font-size:13px;margin-bottom:18px}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:680px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:26px;position:relative}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:3px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+.modal-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;font-family:inherit;line-height:1}
+.modal-close:hover{color:var(--text)}
+/* DROP ZONE */
+.drop-zone{border:2px dashed rgba(59,130,246,.35);border-radius:9px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(59,130,246,.05)}
+.drop-zone-title{font-size:14px;font-weight:500;margin-bottom:5px}
+.drop-zone-sub{font-size:12px;color:var(--muted)}
+.drop-file-name{font-size:12px;color:var(--green);margin-top:7px;display:none}
+.browse-link{color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:none;font-size:12px;font-family:inherit;padding:0}
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:var(--muted)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+/* FORMAT BOX */
+.format-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:13px 15px;margin-bottom:16px}
+.format-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.col-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.col-tag{padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--mono);background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.25)}
+.example-csv{background:#0a0d14;border-radius:7px;padding:11px 13px;font-family:var(--mono);font-size:11px;color:#4ade80;line-height:1.7;overflow-x:auto;white-space:pre;border:1px solid rgba(74,222,128,.15)}
+/* TEXTAREA */
+.csv-area{width:100%;height:150px;background:#0a0d14;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:12px;color:#e8eaf0;resize:vertical;outline:none;line-height:1.6}
+.csv-area:focus{border-color:var(--accent)}
+.csv-area::placeholder{color:#3b4260}
+/* PARSE RESULT */
+.parse-result{margin-top:10px;padding:9px 13px;border-radius:7px;font-size:13px;display:none}
+.pr-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#4ade80}
+.pr-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171}
+.pr-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#fbbf24}
+/* PREVIEW */
+.preview-wrap{margin-top:14px;overflow-x:auto;max-height:180px;border:1px solid var(--border);border-radius:8px;display:none}
+.preview-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.preview-tbl th{background:var(--surface2);color:var(--muted);font-size:11px;padding:7px 11px;text-align:left;position:sticky;top:0;border-bottom:1px solid var(--border)}
+.preview-tbl td{padding:6px 11px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text)}
+.preview-tbl tr:last-child td{border-bottom:none}
+/* MODAL ACTIONS */
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.btn-ghost{padding:7px 16px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}
+.btn-ghost:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
+.btn-primary{padding:7px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.last-import{font-size:11px;color:var(--muted);padding:4px 9px;background:var(--surface2);border-radius:5px;border:1px solid var(--border);display:none}
+/* FOOTER */
+.footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+
+/* ══════════════════ RESPONSIVE / MOBILE ══════════════════ */
+@media (max-width: 768px) {
+  #smGrid{grid-template-columns:1fr!important}
+  /* NAV */
+  .nav{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .nav-right{gap:7px;flex-wrap:wrap}
+  .nav-date{display:none}
+  .btn-import{padding:6px 10px;font-size:12px}
+  .nav-title{font-size:13px}
+  .nav-sub{font-size:11px}
+
+  /* TABS — horizontal scroll */
+  .tabs{padding:10px 14px 0;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:7px 12px;font-size:12px;white-space:nowrap;flex-shrink:0}
+
+  /* LEGEND */
+  .legend-bar{padding:8px 14px;gap:10px}
+  .legend-item{font-size:11px}
+
+  /* FILTERS */
+  .filters{padding:10px 14px;gap:6px}
+  .fbtn{padding:4px 10px;font-size:11px}
+  .flabel{font-size:11px}
+  .search{max-width:100%;width:100%;margin-top:4px}
+
+  /* ALERTS */
+  .alerts{padding:8px 14px}
+  .alert{font-size:11px;padding:6px 10px}
+
+  /* GRIDS — stack to single column on mobile */
+  .g4{grid-template-columns:1fr 1fr;gap:10px;padding:10px 14px}
+  .g3{grid-template-columns:1fr;gap:10px;padding:0 14px 10px}
+  .g2{grid-template-columns:1fr;gap:10px;padding:0 14px 10px}
+  .g2b{grid-template-columns:1fr;gap:10px;padding:0 14px 10px}
+  .gpad{padding:0 14px 10px}
+
+  /* CARDS */
+  .card{padding:12px 14px}
+  .kpi-value{font-size:22px}
+  .kpi-sub{font-size:11px}
+  .card-title{font-size:10px}
+
+  /* CHARTS */
+  .chart-wrap canvas{max-height:180px}
+
+  /* SECTION HEADS */
+  .sec-head{padding:0 14px;margin-bottom:6px}
+  .sec-title{font-size:12px}
+  .sec-sub{font-size:11px}
+
+  /* TABLES — horizontal scroll */
+  .tbl-wrap{padding:0 14px 20px}
+  .tbl-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl{min-width:600px}
+  .tbl th{font-size:10px;padding:0 8px 8px}
+  .tbl td{padding:8px;font-size:12px}
+  .tbl th:first-child,.tbl td:first-child{padding-left:12px}
+  .tbl th:last-child,.tbl td:last-child{padding-right:12px}
+
+  /* AGING BARS */
+  .arow{gap:6px}
+  .alabel{width:55px;font-size:11px}
+  .acount{font-size:11px}
+  .apct{font-size:10px}
+
+  /* MODAL */
+  .modal{padding:18px 16px;border-radius:10px}
+  .modal-title{font-size:14px}
+  .modal-sub{font-size:12px}
+  .drop-zone{padding:16px}
+  .drop-zone-title{font-size:13px}
+  .col-tags{gap:4px}
+  .col-tag{font-size:10px;padding:2px 7px}
+  .example-csv{font-size:10px;padding:8px 10px}
+  .csv-area{height:120px;font-size:11px}
+  .modal-actions{gap:8px}
+  .btn-ghost,.btn-primary{padding:6px 14px;font-size:12px}
+
+  /* FOOTER */
+  .footer{padding:10px 14px;font-size:10px;flex-direction:column;gap:3px}
+
+  /* EMPTY STATES */
+  .empty{padding:36px 14px}
+  .empty-icon{font-size:28px}
+  .empty-title{font-size:13px}
+  .empty-sub{font-size:12px}
+}
+
+@media (max-width: 480px) {
+  .btn-import-text{display:none}
+  /* Extra small phones */
+  .g4{grid-template-columns:1fr 1fr}
+  .kpi-value{font-size:20px}
+  .nav-logo-icon{width:26px;height:26px;font-size:13px}
+  .badge-live{display:none}
+  .last-import{font-size:10px;padding:3px 7px}
+}
+
+@media (min-width: 769px) and (max-width:1024px) {
+  /* Tablet */
+  .g4{grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px}
+  .g2{grid-template-columns:1fr;gap:12px;padding:0 18px 12px}
+  .g2b{grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 12px}
+  .gpad{padding:0 18px 12px}
+  .tbl-wrap{padding:0 18px 20px}
+  .sec-head{padding:0 18px}
+  .alerts{padding:8px 18px}
+  .filters{padding:10px 18px}
+}
+
+
+#loginOverlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:var(--bg);z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+}
+#loginBox{
+  background:var(--surface);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:40px;width:100%;max-width:360px;text-align:center;
+}
+#loginLogo{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+#loginSub{font-size:13px;color:var(--muted);margin-bottom:28px}
+#loginInput{
+  width:100%;padding:12px 16px;border-radius:8px;
+  background:var(--surface2);border:1px solid rgba(255,255,255,.1);
+  color:var(--text);font-size:15px;text-align:center;letter-spacing:3px;
+  outline:none;margin-bottom:12px;
+}
+#loginInput:focus{border-color:var(--accent)}
+#loginBtn{
+  width:100%;padding:12px;border-radius:8px;background:var(--accent);
+  color:#fff;font-size:15px;font-weight:600;border:none;cursor:pointer;
+}
+#loginBtn:hover{opacity:.9}
+#loginError{color:#f87171;font-size:13px;margin-top:10px;display:none}
+#loginHint{font-size:11px;color:var(--muted);margin-top:16px}
+
+</style>
+</head>
+<body>
+
+<div id="loginOverlay">
+  <div id="loginBox">
+    <div id="loginLogo">MVP Motor Group</div>
+    <div id="loginSub">CDK/DMS &middot; Hyundai Dealership</div>
+    <input id="loginInput" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button id="loginBtn" onclick="doLogin()">Entrar al Dashboard</button>
+    <div id="loginError">&#10007; Contraseña incorrecta</div>
+    <div id="loginHint">Contacta a tu manager si no tienes acceso</div>
+  </div>
+</div>
+
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon" style="flex-shrink:0;background:#0054A4;font-size:18px;font-weight:900;font-style:italic;color:#fff;letter-spacing:-1px">H</div>
+    <div><div class="nav-title">MVP Motor Group</div><div class="nav-sub">CDK/DMS &middot; Hyundai Dealership</div></div>
+  </div>
+  <div class="nav-right">
+    <span class="last-import" id="lastImportBadge"></span>
+    <div class="badge-live" id="syncBadge"><span class="dot-live"></span> Data loaded</div>
+    <div class="nav-date" id="navDate"></div>
+    <button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview',this)">Overview</div>
+  <div class="tab" onclick="switchTab('new',this)">New Vehicles</div>
+  <div class="tab" onclick="switchTab('aging',this)">Aging Report</div>
+  <div class="tab" onclick="switchTab('sellmodel',this)">Sell Model</div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,.5);border:1px solid rgba(239,68,68,.7)"></div>Safety Campaign &mdash; cannot be sold</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,.5);border:1px solid rgba(245,158,11,.7)"></div>Trade Receipt &mdash; received trade</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,.3);border:1px solid rgba(239,68,68,.5)"></div>90+ days &mdash; price down</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,.3);border:1px solid rgba(245,158,11,.5)"></div>60&ndash;90 days &mdash; review</div>
+</div>
+
+<!-- ═══ TAB: OVERVIEW ═══ -->
+<div class="tab-view active" id="view-overview">
+  <div class="filters">
+    <span class="flabel">AGE</span>
+    <button class="fbtn" onclick="setF('ovAge','0-30',this)">&lt;30d</button>
+    <button class="fbtn" onclick="setF('ovAge','30-60',this)">30&ndash;60d</button>
+    <button class="fbtn" onclick="setF('ovAge','60-90',this)">60&ndash;90d</button>
+    <button class="fbtn" onclick="setF('ovAge','90-9999',this)">90+ &#9888;</button>
+    <div class="fsep"></div>
+    <input class="search" id="ovSearch" placeholder="Search serial / model / VIN" oninput="renderOvTable()"/>
+  </div>
+  <div class="g4">
+    <div class="card"><div class="card-title">Total Units</div><div class="kpi-value" style="color:var(--accent)" id="kpiTotal">—</div><div class="kpi-sub" id="kpiTotalSub">No data</div></div>
+    <div class="card"><div class="card-title">Safety Campaign</div><div class="kpi-value" style="color:var(--red)" id="kpiAvg">—</div><div class="kpi-sub" id="kpiAvgSub">No data</div></div>
+    <div class="card"><div class="card-title">90+ Day Units</div><div class="kpi-value" style="color:var(--red)" id="kpi90">—</div><div class="kpi-sub" id="kpi90Sub">No data</div></div>
+    <div class="card" id="cotdCard" style="border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,var(--surface) 60%,rgba(245,158,11,.06))">
+      <div class="card-title" style="display:flex;align-items:center;gap:6px">&#127775; Car of the Day</div>
+      <div id="cotdModel" style="font-size:16px;font-weight:600;color:var(--amber);margin-bottom:2px;line-height:1.2">—</div>
+      <div id="cotdSub" style="font-size:11px;color:var(--muted);margin-bottom:6px">No data loaded</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span id="cotdDays" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(245,158,11,.15);color:#fbbf24;display:none"></span>
+        <span id="cotdStock" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(59,130,246,.12);color:#93c5fd;font-family:var(--mono);display:none"></span>
+        <span id="cotdColor" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(168,139,250,.12);color:#a78bfa;display:none"></span>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Aging Distribution</div>
+      <div style="display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap">
+        
+      </div>
+      <div class="chart-wrap" style="height:220px"><canvas id="agingChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Aging Buckets</div>
+      <div id="agingBars"><div style="color:var(--muted);font-size:13px;text-align:center;padding:38px 0">Import data to see</div></div>
+    </div>
+  </div>
+  <div class="sec-head"><span class="sec-title" id="ovTitle">Inventory</span><span class="sec-sub" id="ovCount"></span></div>
+  <div class="tbl-wrap">
+    <div class="tbl-card">
+      <div class="empty" id="ovEmpty"><div class="empty-icon">&#128203;</div><div class="empty-title">No data yet</div><div class="empty-sub">Click "Import File" to load your CDK export</div><button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button></div>
+      <table class="tbl" id="ovTbl" style="display:none"><thead><tr><th>Serial No.</th><th class="sortable" onclick="sortTable('ov','year')">Year &middot; Model</th><th>Ext.</th><th>Invoice</th><th>Total SRP</th><th class="sortable" onclick="sortTable('ov','days')">Days</th><th>Bar</th><th>Action</th></tr></thead><tbody id="ovBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: NEW VEHICLES ═══ -->
+<div class="tab-view" id="view-new">
+  <div class="filters">
+    <span class="flabel">AGE</span>
+    <button class="fbtn active" onclick="setF('nAge','all',this)">All</button>
+    <button class="fbtn" onclick="setF('nAge','0-30',this)">&lt;30d</button>
+    <button class="fbtn" onclick="setF('nAge','30-60',this)">30&ndash;60d</button>
+    <button class="fbtn" onclick="setF('nAge','60-9999',this)">60+ &#9888;</button>
+    <div class="fsep"></div>
+    <input class="search" id="nSearch" placeholder="Search serial / model / VIN" oninput="renderNTable()"/>
+  </div>
+  <div class="g4">
+    <div class="card"><div class="card-title">New Units</div><div class="kpi-value" style="color:var(--accent)" id="nKpiTotal">—</div><div class="kpi-sub" id="nKpiSub">No data</div></div>
+    <div class="card"><div class="card-title">Avg Days on Lot</div><div class="kpi-value" style="color:var(--amber)" id="nKpiAvg">—</div><div class="kpi-sub" id="nKpiAvgSub">60-day target</div></div>
+    <div class="card"><div class="card-title">60+ Day Units</div><div class="kpi-value" style="color:var(--red)" id="nKpi60">—</div><div class="kpi-sub" id="nKpi60Sub">Floor plan risk</div></div>
+  </div>
+  <div class="g2b">
+    <div class="card"><div class="card-title">Model Mix (4-digit code)</div><div class="chart-wrap" style="height:220px"><canvas id="nMixChart"></canvas></div><div id="nMixLeg" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div></div>
+    <div class="card"><div class="card-title">Avg Days by Model</div><div class="chart-wrap" style="height:220px"><canvas id="nDaysChart"></canvas></div></div>
+  </div>
+  <div class="sec-head"><span class="sec-title" id="nTitle">New Vehicles</span><span class="sec-sub" id="nCount"></span></div>
+  <div class="tbl-wrap">
+    <div class="tbl-card">
+      <div class="empty" id="nEmpty"><div class="empty-icon">&#128663;</div><div class="empty-title">No new vehicles</div><div class="empty-sub">Import a file with new inventory</div><button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button></div>
+      <table class="tbl" id="nTbl" style="display:none"><thead><tr><th>Serial No.</th><th class="sortable" onclick="sortTable('n','year')">Year &middot; Model</th><th>Ext.</th><th>Invoice</th><th>Total SRP</th><th class="sortable" onclick="sortTable('n','days')">Days</th><th>Bar</th><th>Action</th></tr></thead><tbody id="nBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: AGING REPORT ═══ -->
+<div class="tab-view" id="view-aging">
+  <div class="filters">
+    
+    <div class="fsep"></div>
+    <span class="flabel">THRESHOLD</span>
+    <button class="fbtn" onclick="setF('agMin','60',this)">60+ days</button>
+    <button class="fbtn active" onclick="setF('agMin','90',this)">90+ days</button>
+    <button class="fbtn" onclick="setF('agMin','120',this)">120+ days</button>
+    <div class="fsep"></div>
+    <input class="search" id="agSearch" placeholder="Search serial / model" oninput="renderAgTable()"/>
+  </div>
+  <div class="g4">
+    <div class="card"><div class="card-title">Critical (90+)</div><div class="kpi-value" style="color:var(--red)" id="agKpi90">—</div><div class="kpi-sub" id="agKpi90Sub">Immediate action</div></div>
+    <div class="card"><div class="card-title">Watch (60&ndash;90)</div><div class="kpi-value" style="color:var(--amber)" id="agKpi60">—</div><div class="kpi-sub">Review pricing</div></div>
+    <div class="card"><div class="card-title">Oldest Unit</div><div class="kpi-value" style="color:var(--red);font-size:20px" id="agKpiOldest">—</div><div class="kpi-sub" id="agKpiOldestSub">days on lot</div></div>
+  </div>
+  <div class="gpad">
+    <div class="card"><div class="card-title">Age Distribution</div><div class="chart-wrap" style="height:190px"><canvas id="agHeatChart"></canvas></div></div>
+  </div>
+  <div class="sec-head"><span class="sec-title" id="agTitle">Aged Inventory</span><span class="sec-sub" id="agCount"></span></div>
+  <div class="tbl-wrap">
+    <div class="tbl-card">
+      <div class="empty" id="agEmpty"><div class="empty-icon">&#9200;</div><div class="empty-title">No aged units</div><div class="empty-sub">Import inventory to generate aging report</div><button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button></div>
+      <table class="tbl" id="agTbl" style="display:none"><thead><tr><th>#</th><th>Serial No.</th><th class="sortable" onclick="sortTable('ag','year')">Year &middot; Model</th><th>Invoice</th><th>Total SRP</th><th class="sortable" onclick="sortTable('ag','days')">Days</th><th>Action</th></tr></thead><tbody id="agBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB: SELL MODEL ═══ -->
+<div class="tab-view" id="view-sellmodel">
+  <div class="filters">
+    <div class="fsep"></div>
+    <span class="flabel">SORT BY</span>
+    <button class="fbtn active" onclick="setF('smSort','days',this)">Most Aged</button>
+    <button class="fbtn" onclick="setF('smSort','count',this)">Most Units</button>
+    <div class="fsep"></div>
+    <span class="flabel">MIN DAYS</span>
+    <button class="fbtn" onclick="setF('smMin','0',this)">All</button>
+    <button class="fbtn" onclick="setF('smMin','30',this)">30+</button>
+    <button class="fbtn" onclick="setF('smMin','60',this)">60+</button>
+    <button class="fbtn" onclick="setF('smMin','90',this)">90+</button>
+    <div class="fsep"></div>
+    <input class="search" id="smSearch" placeholder="Search model / color" oninput="renderSellModel()"/>
+  </div>
+
+  <div class="alerts" id="smAlerts"></div>
+
+  <!-- KPI cards -->
+  <div class="g4">
+    <div class="card"><div class="card-title">Model/Color Combos</div><div class="kpi-value" style="color:var(--accent)" id="smKpiCombos">—</div><div class="kpi-sub" id="smKpiCombosSub">unique combinations</div></div>
+    <div class="card"><div class="card-title">Oldest Combo</div><div class="kpi-value" style="color:var(--red);font-size:20px" id="smKpiOldest">—</div><div class="kpi-sub" id="smKpiOldestSub">days — top priority</div></div>
+    <div class="card"><div class="card-title">Combos 60+ Days</div><div class="kpi-value" style="color:var(--amber)" id="smKpi60">—</div><div class="kpi-sub">Need attention</div></div>
+    <div class="card"><div class="card-title">Combos 90+ Days</div><div class="kpi-value" style="color:var(--red)" id="smKpi90">—</div><div class="kpi-sub">Price down urgently</div></div>
+  </div>
+
+  <!-- Cards grid -->
+  <div style="padding:0 24px 24px">
+    <div id="smGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+      <div class="empty" id="smEmpty" style="grid-column:1/-1">
+        <div class="empty-icon">&#128664;</div>
+        <div class="empty-title">No data yet</div>
+        <div class="empty-sub">Import inventory to see the sell model view</div>
+        <button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer"><span id="footerText">No data loaded &middot; Click "Import File" to get started</span><span>MVP Motor Group &mdash; Hyundai v1.0</span></div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    <div class="modal-title">Import CDK Inventory Export</div>
+    <div class="modal-sub">Upload your CSV or Excel file directly from your computer, or paste the data below.</div>
+
+    <!-- DROP ZONE -->
+    <div class="drop-zone" id="dropZone"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleDrop(event)">
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none" onchange="handleFileSelect(this.files[0])"/>
+      <div class="drop-zone-title">&#128196; Drag &amp; drop your file here</div>
+      <div class="drop-zone-sub">Supports CSV, Excel (.xlsx/.xls) &middot; or <button class="browse-link" onclick="document.getElementById('fileInput').click()">browse to upload</button></div>
+      <div class="drop-file-name" id="fileLabel"></div>
+    </div>
+
+    <div class="divider">or paste data manually</div>
+
+    <div class="format-box">
+      <div class="format-title">Expected columns (from your CDK export)</div>
+      <div class="col-tags">
+        <span class="col-tag">Model Name</span><span class="col-tag">Serial No.</span><span class="col-tag">Model</span><span class="col-tag">Ext.</span><span class="col-tag">Yr.</span><span class="col-tag">VIN</span><span class="col-tag">DIS</span><span class="col-tag">Invoice</span><span class="col-tag">Total SRP</span><span class="col-tag">Cmpgn.</span><span class="col-tag">Trade Status</span>
+      </div>
+      <pre class="example-csv">Model Name,Serial No.,Model,Ext.,Yr.,VIN,DIS,Invoice,Total SRP,Cmpgn.,Trade Status
+PRIUS SEDAN,T3065592,1170A,01L0,2026,JTDACAAU3T3065592,171,33140.00,35190.00,Safety Campaign,
+COROLLA LE CVT L4,T3039648,1695C,0089,2026,JTDB4MEE9T3039648,28,26114.00,27730.00,No campaign,Receipt</pre>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <span style="font-size:12px;color:var(--muted)">Paste data here:</span>
+      <button onclick="loadSample()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-family:inherit;padding:0">Load sample data &rarr;</button>
+    </div>
+    <textarea class="csv-area" id="csvInput" placeholder="Paste CSV data here (header row first)..." oninput="validateCSV()"></textarea>
+    <div class="parse-result" id="parseResult"></div>
+    <div class="preview-wrap" id="previewWrap"><table class="preview-tbl" id="previewTbl"></table></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="importBtn" onclick="commitImport()" disabled>Import &amp; Refresh Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ STATE ══════════════════ */
+var D=[],PB=[];
+var PRELOADED_DATA=[{"stock":"SU087883","year":2025,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS200","type":"New","color":"AZO","srp":26395.0,"invoice":24815.0,"days":154,"vin":"KMHLL4DG8SU087883","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"SU091699","year":2025,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"OAS42J61VSS199","type":"New","color":"BLUE","srp":26395.0,"invoice":24815.0,"days":161,"vin":"KMHLL4DG2SU091699","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"SU093182","year":2025,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS200","type":"New","color":"BLUE","srp":25395.0,"invoice":23875.0,"days":123,"vin":"KMHLL4DG8SU093182","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"SU093236","year":2025,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"OAS42J61VSS199","type":"New","color":"GRAY","srp":26395.0,"invoice":24815.0,"days":161,"vin":"KMHLL4DG5SU093236","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"SU093252","year":2025,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS199","type":"New","color":"GRAY","srp":26395.0,"invoice":24815.0,"days":154,"vin":"KMHLL4DG3SU093252","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH075740","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe Hybrid","modelCode":"V1DD005","type":"New","color":"WHITE","srp":49995.0,"invoice":46745.0,"days":94,"vin":"5NMP24G12TH075740","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH158346","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9G1KKK060","type":"New","color":"WHITE","srp":49695.0,"invoice":46220.0,"days":157,"vin":"5NTJDDDF2TH158346","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH167786","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"BLACK","srp":36995.0,"invoice":34590.0,"days":67,"vin":"5NTJA4DE9TH167786","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH167805","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9G1KKK060","type":"New","color":"VEM","srp":49695.0,"invoice":46220.0,"days":4,"vin":"5NTJDDDF9TH167805","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH169755","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"BLACK","srp":36995.0,"invoice":34590.0,"days":74,"vin":"5NTJA4DE8TH169755","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH171537","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"WHITE","srp":36995.0,"invoice":34590.0,"days":12,"vin":"5NTJA4DE8TH171537","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH171551","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"BLUE STONE","srp":36995.0,"invoice":34590.0,"days":35,"vin":"5NTJA4DE2TH171551","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH171552","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"BLUE STONE","srp":36995.0,"invoice":34590.0,"days":35,"vin":"5NTJA4DE4TH171552","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH171576","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"HAMPTON GRAY","srp":36995.0,"invoice":34590.0,"days":35,"vin":"5NTJA4DE7TH171576","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH171597","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"HAMPTON GRAY","srp":36995.0,"invoice":34590.0,"days":35,"vin":"5NTJA4DE4TH171597","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH171611","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"SAGE GRAY","srp":36995.0,"invoice":34590.0,"days":35,"vin":"5NTJA4DE5TH171611","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH171615","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JGG053","type":"New","color":"WHITE","srp":42195.0,"invoice":39245.0,"days":35,"vin":"5NTJC4DEXTH171615","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH172465","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"HAMPTON GRAY","srp":36995.0,"invoice":34590.0,"days":5,"vin":"5NTJA4DE3TH172465","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH172498","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"BLACK","srp":36995.0,"invoice":34590.0,"days":5,"vin":"5NTJA4DE7TH172498","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH172551","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"WHITE","srp":36995.0,"invoice":34590.0,"days":5,"vin":"5NTJA4DE7TH172551","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH172580","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"HAMPTON GRAY","srp":36995.0,"invoice":34590.0,"days":5,"vin":"5NTJA4DE3TH172580","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH172583","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"BLACK","srp":36995.0,"invoice":34590.0,"days":5,"vin":"5NTJA4DE9TH172583","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH172622","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Cruz","modelCode":"HPP5L9A1JSS022","type":"New","color":"BLACK","srp":36995.0,"invoice":34590.0,"days":5,"vin":"5NTJA4DE4TH172622","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH187875","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JSS007","type":"New","color":"WHITE","srp":43195.0,"invoice":40390.0,"days":64,"vin":"5NMP14GL9TH187875","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH187893","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JSS007","type":"New","color":"GRC","srp":43195.0,"invoice":40390.0,"days":64,"vin":"5NMP14GL0TH187893","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH202038","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JSS007","type":"New","color":"HAMPTON GRAY","srp":43195.0,"invoice":40390.0,"days":5,"vin":"5NMP14GL4TH202038","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH202045","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JSS007","type":"New","color":"ECO GRAY","srp":43195.0,"invoice":40390.0,"days":5,"vin":"5NMP14GL1TH202045","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH202353","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JSS007","type":"New","color":"BLACK","srp":43195.0,"invoice":40390.0,"days":5,"vin":"5NMP14GL1TH202353","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH203054","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JDD020","type":"New","color":"ECO GRAY","srp":46790.0,"invoice":43750.0,"days":5,"vin":"5NMP24GL0TH203054","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH203057","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JDD020","type":"New","color":"WHITE","srp":46790.0,"invoice":43750.0,"days":12,"vin":"5NMP24GL6TH203057","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH203060","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JDD020","type":"New","color":"HAMPTON GRAY","srp":46790.0,"invoice":43750.0,"days":12,"vin":"5NMP24GL6TH203060","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TH203382","year":2026,"make":"Hyundai","model":"SANT","modelFull":"Santa Fe","modelCode":"HZW7L9G1JDD020","type":"New","color":"BLACK","srp":46790.0,"invoice":43750.0,"days":5,"vin":"5NMP24GL6TH203382","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU036729","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"IBS4L5G1MGG838","type":"New","color":"BLACK","srp":49495.0,"invoice":46030.0,"days":158,"vin":"KMHLW4DK0TU036729","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU112402","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VDD1JJ","type":"New","color":"ROO","srp":28245.0,"invoice":26555.0,"days":61,"vin":"KMHLM4DG7TU112402","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU149518","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"BLUE","srp":25395.0,"invoice":23875.0,"days":61,"vin":"KMHLL4DG9TU149518","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU150137","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"GRAY","srp":25395.0,"invoice":23395.0,"days":61,"vin":"KMHLL4DG2TU150137","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU156307","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"FLUID METAL","srp":25395.0,"invoice":23875.0,"days":12,"vin":"KMHLL4DG9TU156307","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU158169","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"RED","srp":25395.0,"invoice":23875.0,"days":12,"vin":"KMHLL4DG0TU158169","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU158247","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"CYBER GRAY","srp":25395.0,"invoice":23875.0,"days":12,"vin":"KMHLL4DG5TU158247","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU158960","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"BLUE","srp":25395.0,"invoice":23875.0,"days":12,"vin":"KMHLL4DG3TU158960","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU159071","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"GRC","srp":25395.0,"invoice":23875.0,"days":61,"vin":"KMHLL4DGXTU159071","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU159540","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"WHITE","srp":25395.0,"invoice":23875.0,"days":12,"vin":"KMHLL4DG8TU159540","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU159547","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS42J61VSS204","type":"New","color":"WHITE","srp":25395.0,"invoice":23875.0,"days":12,"vin":"KMHLL4DG0TU159547","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU159583","year":2026,"make":"Hyundai","model":"ELAN","modelFull":"Elantra","modelCode":"0AS4D5G1UHH624","type":"New","color":"ECO GRAY PEARL","srp":36495.0,"invoice":33940.0,"days":47,"vin":"KMHLR4DF7TU159583","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU377913","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"GRAY","srp":29200.0,"invoice":27305.0,"days":154,"vin":"KM8HA3AB6TU377913","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU396917","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW5D5G1JKK009","type":"New","color":"ANA","srp":36495.0,"invoice":34125.0,"days":122,"vin":"KM8HD3A3XTU396917","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU397426","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"GRAY","srp":29200.0,"invoice":27305.0,"days":124,"vin":"KM8HA3AB7TU397426","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU413260","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VPP000","type":"New","color":"ORANGE","srp":31950.0,"invoice":29875.0,"days":95,"vin":"KM8HF3AB2TU413260","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU413393","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VPP000","type":"New","color":"AZUL","srp":31950.0,"invoice":29875.0,"days":95,"vin":"KM8HF3ABXTU413393","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU420634","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"AZO","srp":25295.0,"invoice":23780.0,"days":187,"vin":"KMHRB8A30TU420634","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU421142","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"BLACK","srp":25295.0,"invoice":23780.0,"days":154,"vin":"KMHRB8A36TU421142","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU429252","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05Y","type":"New","color":"BLACK","srp":25995.0,"invoice":24435.0,"days":65,"vin":"KMHRB8A39TU429252","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU431646","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"GRO","srp":29200.0,"invoice":27305.0,"days":64,"vin":"KM8HA3AB6TU431646","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU432123","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"ECOTRINIC GRAY","srp":29200.0,"invoice":27305.0,"days":64,"vin":"KM8HA3AB1TU432123","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU433179","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"ORANGE","srp":29200.0,"invoice":27305.0,"days":64,"vin":"KM8HA3AB0TU433179","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU433676","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"AZO","srp":24375.0,"invoice":22915.0,"days":126,"vin":"KMHRB8A34TU433676","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU433901","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"BLUE","srp":24375.0,"invoice":22915.0,"days":126,"vin":"KMHRB8A37TU433901","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU433908","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"BLUE","srp":24375.0,"invoice":22915.0,"days":122,"vin":"KMHRB8A3XTU433908","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU434041","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"BLACK","srp":24375.0,"invoice":22915.0,"days":126,"vin":"KMHRB8A3XTU434041","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU434213","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"WHITE","srp":29200.0,"invoice":27305.0,"days":61,"vin":"KM8HA3AB1TU434213","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU434217","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"WHITE","srp":29200.0,"invoice":27305.0,"days":61,"vin":"KM8HA3AB9TU434217","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU434323","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"DENIM BLUE","srp":29200.0,"invoice":27305.0,"days":64,"vin":"KM8HA3AB8TU434323","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU434617","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"GRC","srp":23925.0,"invoice":22375.0,"days":65,"vin":"KMHRB8A34TU434617","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU434641","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"CYBER GRAY","srp":29200.0,"invoice":27305.0,"days":64,"vin":"KM8HA3AB0TU434641","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU435767","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW5D5G1JKK009","type":"New","color":"ECO GRAY","srp":36495.0,"invoice":34125.0,"days":5,"vin":"KM8HD3A35TU435767","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU440663","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"BLUE","srp":35995.0,"invoice":33835.0,"days":184,"vin":"KM8JA3DE8TU440663","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU441752","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"BLACK","srp":29200.0,"invoice":27305.0,"days":14,"vin":"KM8HA3AB0TU441752","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU441935","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"BLACK","srp":29200.0,"invoice":27305.0,"days":7,"vin":"KM8HA3AB8TU441935","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU442617","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"GRO","srp":29200.0,"invoice":27305.0,"days":14,"vin":"KM8HA3ABXTU442617","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU442733","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"ECO GRAY PEARL","srp":29200.0,"invoice":27305.0,"days":7,"vin":"KM8HA3AB1TU442733","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU442940","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"WHITE","srp":29200.0,"invoice":27305.0,"days":12,"vin":"KM8HA3AB6TU442940","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU442966","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"ORANGE","srp":29200.0,"invoice":27305.0,"days":14,"vin":"KM8HA3AB2TU442966","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU443008","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"CYBER GRAY","srp":29200.0,"invoice":27305.0,"days":14,"vin":"KM8HA3AB1TU443008","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU443047","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"WHITE","srp":29200.0,"invoice":27305.0,"days":5,"vin":"KM8HA3AB0TU443047","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU445890","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"CYBER GRAY","srp":29200.0,"invoice":27305.0,"days":7,"vin":"KM8HA3ABXTU445890","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU446035","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"CYBER GRAY","srp":29200.0,"invoice":27305.0,"days":7,"vin":"KM8HA3AB8TU446035","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU446490","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"DENIM BLUE","srp":29200.0,"invoice":27305.0,"days":12,"vin":"KM8HA3ABXTU446490","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU446725","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"AZC","srp":29200.0,"invoice":27305.0,"days":12,"vin":"KM8HA3AB0TU446725","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU447692","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"RED","srp":29200.0,"invoice":27305.0,"days":7,"vin":"KM8HA3AB5TU447692","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU447757","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"DENIN BLUE","srp":29200.0,"invoice":27305.0,"days":5,"vin":"KM8HA3AB7TU447757","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU452141","year":2026,"make":"Hyundai","model":"KONA","modelFull":"Kona","modelCode":"1EW52J61VSS032","type":"New","color":"GREEN","srp":29200.0,"invoice":27305.0,"days":5,"vin":"KM8HA3AB4TU452141","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU454131","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"BLUE","srp":35995.0,"invoice":33835.0,"days":94,"vin":"KM8JA3DE1TU454131","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU459242","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"GRO","srp":23295.0,"invoice":22375.0,"days":7,"vin":"KMHRB8A32TU459242","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU459251","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"ECO GRAY","srp":23925.0,"invoice":22375.0,"days":7,"vin":"KMHRB8A33TU459251","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU459261","year":2026,"make":"Hyundai","model":"VENU","modelFull":"Venue","modelCode":"SNW5D561VDD05X","type":"New","color":"GRIS","srp":23925.0,"invoice":22375.0,"days":7,"vin":"KMHRB8A36TU459261","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU459395","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"BLUE","srp":34995.0,"invoice":32720.0,"days":61,"vin":"KM8JA3DE5TU459395","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU459616","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"ROO","srp":34995.0,"invoice":32720.0,"days":64,"vin":"KM8JA3DE6TU459616","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU459673","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"GRC","srp":34995.0,"invoice":32720.0,"days":61,"vin":"KM8JA3DE7TU459673","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU459949","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"-","srp":34995.0,"invoice":32720.0,"days":64,"vin":"KM8JA3DE0TU459949","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU460158","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"ECOTRINIC GRAY","srp":34995.0,"invoice":32720.0,"days":64,"vin":"KM8JA3DE7TU460158","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU460237","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"GRO","srp":34995.0,"invoice":32720.0,"days":64,"vin":"KM8JA3DE3TU460237","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU460275","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"WHITE","srp":34995.0,"invoice":32720.0,"days":64,"vin":"KM8JA3DE0TU460275","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU460280","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"WHITE","srp":34995.0,"invoice":32720.0,"days":61,"vin":"KM8JA3DE4TU460280","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU460756","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JDD2UV","type":"New","color":"GRC","srp":36995.0,"invoice":34590.0,"days":61,"vin":"KM8JB3DE9TU460756","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU461506","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JDD2UV","type":"New","color":"RED","srp":36995.0,"invoice":34590.0,"days":61,"vin":"KM8JB3DE2TU461506","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU466075","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JHH06X","type":"New","color":"SILVER","srp":45995.0,"invoice":42775.0,"days":35,"vin":"KM8JE3DE5TU466075","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU467280","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"AMAZON GRAY","srp":34995.0,"invoice":32720.0,"days":12,"vin":"KM8JA3DE6TU467280","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU467721","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"ECO GRAY PEARL","srp":34995.0,"invoice":32720.0,"days":14,"vin":"KM8JA3DEXTU467721","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU468642","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"SILVER","srp":34995.0,"invoice":32720.0,"days":14,"vin":"KM8JA3DE8TU468642","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU468681","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"GRC","srp":34995.0,"invoice":32720.0,"days":14,"vin":"KM8JA3DE7TU468681","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU468696","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"DEEP SEA","srp":34995.0,"invoice":32720.0,"days":14,"vin":"KM8JA3DE9TU468696","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU468771","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"BLACK","srp":34995.0,"invoice":32720.0,"days":14,"vin":"KM8JA3DE8TU468771","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU468776","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"BLACK","srp":34995.0,"invoice":32720.0,"days":14,"vin":"KM8JA3DE7TU468776","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU468805","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"BLACK","srp":34995.0,"invoice":32720.0,"days":12,"vin":"KM8JA3DEXTU468805","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false},{"stock":"TU469000","year":2026,"make":"Hyundai","model":"TUCS","modelFull":"Tucson","modelCode":"GWWDL9A1JSS055","type":"New","color":"WHITE","srp":34995.0,"invoice":32720.0,"days":12,"vin":"KM8JA3DE6TU469000","cmpgn":"No campaign","trade":"","isSafety":false,"isReceipt":false}];
+
+
+var LAST_UPDATED="April 04, 2026";
+
+var SORT={ov:{col:'days',dir:'desc'},n:{col:'days',dir:'desc'},u:{col:'days',dir:'desc'},ag:{col:'days',dir:'desc'}};
+var F={ovAge:'0-9999',nAge:'all',agMin:'90',smSort:'days',smExclude:'safety'};
+var CI={};
+
+/* ══════════════════ DATE ══════════════════ */
+(function(){
+  var el=document.getElementById('navDate');
+  try{
+    var d=new Date();
+    var opts={weekday:'short',month:'short',day:'numeric',year:'numeric'};
+    el.textContent=d.toLocaleDateString('en-US',opts);
+  }catch(e){
+    el.textContent=new Date().toString().slice(0,15);
+  }
+})();
+
+// Auto-load preloaded data on startup
+(function(){
+  D=PRELOADED_DATA.slice();
+  refreshAll();
+  document.getElementById('lastImportBadge').textContent='Data: '+LAST_UPDATED;
+  document.getElementById('lastImportBadge').style.display='inline-block';
+  document.getElementById('syncBadge').style.display='flex';
+  document.getElementById('footerText').textContent=D.length+' units loaded · Data as of '+LAST_UPDATED;
+})();
+
+/* ══════════════════ MODAL ══════════════════ */
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+/* ══════════════════ FILE HANDLING ══════════════════ */
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  var file=e.dataTransfer.files[0];
+  if(file) readFile(file);
+}
+function handleFileSelect(file){
+  if(file) readFile(file);
+}
+function readFile(file){
+  var name=file.name;
+  var ext=name.split('.').pop().toLowerCase();
+  document.getElementById('fileLabel').textContent='&#10003; '+name;
+  document.getElementById('fileLabel').style.display='block';
+  if(ext==='xlsx'||ext==='xls'){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var bytes=new Uint8Array(e.target.result);
+        var csv=xlsxToCSV(bytes);
+        document.getElementById('csvInput').value=csv;
+        validateCSV();
+      }catch(err){
+        document.getElementById('fileLabel').textContent='Error: '+err.message;
+        document.getElementById('fileLabel').style.color='#f87171';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader=new FileReader();
+    reader.onload=function(e){
+      document.getElementById('csvInput').value=e.target.result;
+      validateCSV();
+    };
+    reader.readAsText(file);
+  }
+}
+
+/* ══════════════════ MINIMAL XLSX READER ══════════════════ */
+/* Reads shared strings + sheet data from xlsx without any library */
+function xlsxToCSV(uint8){
+  // xlsx is a zip file — find files by signature
+  var str=String.fromCharCode.apply(null,uint8);
+  // Fall back: tell user to save as CSV
+  throw new Error('Please save your Excel file as CSV first (File > Save As > CSV), then upload the CSV.');
+}
+
+/* ══════════════════ SAMPLE DATA ══════════════════ */
+var SAMPLE="Model Name,Serial No.,Model,Ext.,Yr.,VIN,DIS,Invoice,Total SRP,Cmpgn.,Trade Status\nPRIUS SEDAN,T3065592,1170A,01L0,2026,JTDACAAU3T3065592,171,33140.00,35190.00,Safety Campaign,\nPRIUS PRIME SEDAN,T3065994,1175B,0089,2026,JTDACACU5T3065994,105,34093.58,36430.00,Safety Campaign,\nCOROLLA SE CVT L4,T3527044,1684B,01K3,2026,JTDP4MCE6T3527044,45,30004.00,31670.00,No campaign,\nCOROLLA LE CVT L4,T3039648,1695C,0089,2026,JTDB4MEE9T3039648,28,26114.00,27730.00,No campaign,Receipt\nTACOMA SR 4X2,TT041655,7302A,01L7,2026,3TYKD5HNXTT041655,112,36315.00,37450.00,No campaign,\nTACOMA SR 4X4,TT023590,7303A,0040,2026,3TYLD5KNXTT023590,36,39884.00,41010.00,No campaign,\nCAMRY XSE HYBRID,TU224125,2613A,01L7,2026,4T1DAACK6TU224125,135,48348.00,51010.00,Safety Campaign,\nTUNDRA 4X4 SR,TX349752,8481A,01G3,2026,5TFKB5DB4TX349752,108,47971.00,49760.00,No campaign,\nTUNDRA HV TRD PRO,TX120133,8484A,0040,2026,5TFPC5DB0TX120133,183,78764.00,84025.00,Safety Campaign,\n4RUNNER HV 4WD,T5030469,8781A,01L7,2026,JTEVB5BR8T5030469,92,80419.00,85290.00,No campaign,Receipt\nCOROLLA HYBRID LE,T3130264,1692B,01F7,2026,JTDBCMFE6T3130264,73,29183.00,30555.00,No campaign,\nGR86 COUPE,T9077430,6354B,0DCK,2026,JF1ZNBE17T9077430,16,38306.00,39630.00,No campaign,\nSIENNA CE FWD,,5190B,0040,2026,5TDKRKEC5TS308179,3,49014.00,51730.00,No campaign,\nCROWN SIGNIA LTD,T3036462,4061A,0090,2026,JTDACAAJ2T3036462,71,59635.00,63630.00,No campaign,\nTACOMA HV TRD,ST020997,7333B,01L7,2025,3TYLC5LN3ST020997,318,58633.00,62020.00,Safety Campaign,";
+function loadSample(){document.getElementById('csvInput').value=SAMPLE;validateCSV();}
+
+/* ══════════════════ CSV PARSE ══════════════════ */
+function parseCSV(raw){
+  var lines=raw.trim().split('\n').filter(function(l){return l.trim();});
+  if(lines.length<2) return null;
+  var sep=lines[0].indexOf('\t')>=0?'\t':',';
+  var rawH=lines[0].split(sep).map(function(h){return h.trim().replace(/^"|"$/g,'');});
+  var normH=rawH.map(function(h){return h.toLowerCase().replace(/[^a-z0-9]/g,'');});
+  var aliases={
+    stock:    ['serialno','stockno','stock','serialnumber'],
+    year:     ['yr','year'],
+    modelname:['modelname'],
+    model:    ['model'],
+    type:     ['type'],
+    days:     ['dis','daysonlot','days'],
+    color:    ['ext','color','exterior'],
+    srp:      ['totalsrp','srp','price','totalprice'],
+    invoice:  ['invoice'],
+    vin:      ['vin'],
+    cmpgn:    ['cmpgn','campaign','cmpgn'],
+    trade:    ['tradestatus','trade','tradestatuscolumn']
+  };
+  function idx(keys){for(var i=0;i<keys.length;i++){var x=normH.indexOf(keys[i]);if(x>=0)return x;}return -1;}
+  var im={};
+  Object.keys(aliases).forEach(function(k){im[k]=idx(aliases[k]);});
+  var req=['stock','year','model','days','color','srp','vin'];
+  var miss=req.filter(function(k){return im[k]<0;});
+  if(miss.length) return{error:'Missing columns: '+miss.join(', ')};
+  function splitCSVLine(line,sep){
+    if(sep==='\t') return line.split('\t').map(function(v){return v.trim();});
+    var res=[],cur='',inQ=false;
+    for(var ci=0;ci<line.length;ci++){
+      var ch=line[ci];
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===sep&&!inQ){res.push(cur);cur='';}
+      else{cur+=ch;}
+    }
+    res.push(cur);
+    return res;
+  }
+    function g(vals,k){var i=im[k];return i>=0&&vals[i]!==undefined?vals[i].replace(/^"|"$/g,'').trim():'';}
+  var rows=[],errs=[];
+  for(var i=1;i<lines.length;i++){
+    var vals=splitCSVLine(lines[i],sep);
+    var days=parseInt(g(vals,'days'));
+    var year=parseInt(g(vals,'year'));
+    var srp=parseFloat(g(vals,'srp').replace(/[^0-9.]/g,''));
+    var inv=parseFloat(g(vals,'invoice').replace(/[^0-9.]/g,''))||0;
+    if(isNaN(days)||isNaN(year)){errs.push('Row '+(i+1)+' skipped');continue;}
+    var modelCode=g(vals,'model');
+    var model4=modelCode.substring(0,4);
+    var modelFull=g(vals,'modelname')||modelCode;
+    var stockVal=g(vals,'stock')||g(vals,'vin').slice(-6)||('R'+i);
+    var typeVal=g(vals,'type')||'New';
+    var cmpgn=g(vals,'cmpgn');
+    var trade=g(vals,'trade');
+    rows.push({
+      stock:stockVal,year:year,make:'Hyundai',
+      model:model4,modelFull:modelFull,modelCode:modelCode,
+      type:typeVal,color:g(vals,'color')||'—',
+      srp:isNaN(srp)?0:srp,invoice:inv,
+      days:days,vin:g(vals,'vin'),
+      cmpgn:cmpgn,trade:trade,
+      isSafety:cmpgn.toLowerCase().indexOf('safety')>=0,
+      isReceipt:trade.toLowerCase().indexOf('receipt')>=0
+    });
+  }
+  return{rows:rows,errs:errs};
+}
+
+function validateCSV(){
+  var raw=document.getElementById('csvInput').value;
+  var res=document.getElementById('parseResult');
+  var pw=document.getElementById('previewWrap');
+  var btn=document.getElementById('importBtn');
+  res.style.display='none';pw.style.display='none';btn.disabled=true;PB=[];
+  if(!raw.trim()) return;
+  var result=parseCSV(raw);
+  if(!result) return;
+  if(result.error){res.className='parse-result pr-err';res.textContent='Error: '+result.error;res.style.display='block';return;}
+  PB=result.rows;
+  var w=result.errs.length?' · '+result.errs.length+' rows skipped':'';
+  res.className=result.errs.length?'parse-result pr-warn':'parse-result pr-ok';
+  res.textContent=(result.errs.length?'':'\u2713 ')+PB.length+' vehicles parsed'+w;
+  res.style.display='block';
+  // Preview table
+  var tbl=document.getElementById('previewTbl');tbl.innerHTML='';
+  var thead=tbl.createTHead();var hr=thead.insertRow();
+  ['Serial No.','Yr.','Model','Model Name','Ext.','SRP','Days','Campaign','Trade'].forEach(function(h){var th=document.createElement('th');th.textContent=h;hr.appendChild(th);});
+  var tbody=tbl.createTBody();
+  PB.slice(0,6).forEach(function(v){
+    var tr=tbody.insertRow();
+    [v.stock,v.year,v.model,v.modelFull,v.color,v.srp?'$'+v.srp.toLocaleString():'—',v.days+'d',v.cmpgn,v.trade].forEach(function(val){var td=tr.insertCell();td.textContent=val||'—';});
+  });
+  if(PB.length>6){var tr=tbody.insertRow();var td=tr.insertCell();td.colSpan=9;td.textContent='... and '+(PB.length-6)+' more';td.style.cssText='color:var(--muted);text-align:center;padding:7px;font-style:italic';}
+  pw.style.display='block';
+  btn.disabled=(PB.length===0);
+}
+
+function commitImport(){
+  D=PB.slice();
+  refreshAll();
+  closeModal();
+  var now=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('lastImportBadge').textContent='Imported: '+now;
+  document.getElementById('lastImportBadge').style.display='inline-block';
+  document.getElementById('syncBadge').style.display='flex';
+  document.getElementById('footerText').textContent=D.length+' units loaded \xb7 Updated '+now;
+}
+
+/* ══════════════════ TABS ══════════════════ */
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-view').forEach(function(v){v.classList.remove('active');});
+  el.classList.add('active');
+  document.getElementById('view-'+name).classList.add('active');
+  if(D.length) renderTab(name);
+}
+function renderTab(name){
+  if(name==='overview'){updateOvCharts();renderOvTable();}
+  else if(name==='new'){updateNCharts();renderNTable();}
+  else if(name==='aging'){updateAgCharts();renderAgTable();}
+  else if(name==='sellmodel'){renderSellModel();}
+}
+
+/* ══════════════════ FILTERS ══════════════════ */
+function setF(key,val,btn){
+  F[key]=val;
+  btn.closest('.filters').querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  if(key==='ovAge') renderOvTable();
+  else if(key==='nAge') renderNTable();
+  else if(key==='agMin') renderAgTable();
+  else if(key==='smExclude'||key==='smSort'||key==='smMin'){renderSellModel();}
+}
+
+/* ══════════════════ HELPERS ══════════════════ */
+function isNew(v){return v.type.toLowerCase()==='new';}
+function avgD(arr){return arr.length?Math.round(arr.reduce(function(s,v){return s+v.days;},0)/arr.length):0;}
+function ageCls(d){return d>=90?'age-crit':d>=60?'age-warn':'age-ok';}
+function ageIcon(d){return d>=90?'\uD83D\uDD34':d>=60?'\uD83D\uDFE1':'\uD83D\uDFE2';}
+function ageColor(d){return d>=90?'#ef4444':d>=60?'#f59e0b':'#22c55e';}
+function rowCls(v){return '';}
+function statusBadge(v){
+  if(v.isSafety) return '<span class="status-badge sb-safety">Safety</span>';
+  if(v.isReceipt) return '<span class="status-badge sb-receipt">Receipt</span>';
+  return '';
+}
+function actBtn(d){
+  if(d>=90) return '<button class="act-red">⚡ Priority Unit</button>';
+  if(d>=60) return '<button class="act-amber">Review</button>';
+  return '<button class="act-blue">Monitor</button>';
+}
+function barHTML(d,mx){
+  var pct=Math.min(Math.round(d/(mx||120)*100),100);
+  return '<div style="width:70px;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+ageColor(d)+';border-radius:3px"></div></div>';
+}
+function fmtPrice(p){return p?'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';}
+var COLORS=['#3b82f6','#a78bfa','#2dd4bf','#f59e0b','#22c55e','#ef4444','#fb923c','#e879f9','#38bdf8','#f472b6'];
+
+/* ══════════════════ CANVAS CHARTS ══════════════════ */
+function destroyChart(id){if(CI[id]){CI[id]=null;}}
+function getCtx(id){
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||600;
+  canvas.height=wrap.offsetHeight||220;
+  return canvas.getContext('2d');
+}
+
+function drawBarChart(id,labels,datasets,opts){
+  opts=opts||{};
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||600;
+  canvas.height=wrap.offsetHeight||220;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  var pad={top:16,right:16,bottom:40,left:opts.horizontal?70:36};
+  var cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+  ctx.clearRect(0,0,W,H);
+  var allVals=[];
+  datasets.forEach(function(ds){ds.data.forEach(function(v){allVals.push(v);});});
+  var maxV=Math.max.apply(null,allVals.concat([1]));
+  var n=labels.length;
+  var ds0=datasets[0],ds1=datasets[1];
+  var barW=opts.horizontal?(ch/n*0.6):(cw/n/(datasets.length)*0.8);
+  var groupW=opts.horizontal?(ch/n):(cw/n);
+  // Grid lines
+  ctx.strokeStyle='rgba(255,255,255,.05)';
+  ctx.lineWidth=1;
+  for(var gi=0;gi<=4;gi++){
+    var gv=maxV*gi/4;
+    if(opts.horizontal){
+      var gx=pad.left+cw*gi/4;
+      ctx.beginPath();ctx.moveTo(gx,pad.top);ctx.lineTo(gx,pad.top+ch);ctx.stroke();
+      ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';ctx.textAlign='center';
+      ctx.fillText(Math.round(gv),gx,pad.top+ch+14);
+    } else {
+      var gy=pad.top+ch-ch*gi/4;
+      ctx.beginPath();ctx.moveTo(pad.left,gy);ctx.lineTo(pad.left+cw,gy);ctx.stroke();
+      ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';ctx.textAlign='right';
+      ctx.fillText(Math.round(gv),pad.left-5,gy+3);
+    }
+  }
+  // Bars
+  datasets.forEach(function(ds,di){
+    ds.data.forEach(function(val,i){
+      ctx.fillStyle=Array.isArray(ds.color)?ds.color[i]:ds.color;
+      ctx.globalAlpha=0.9;
+      if(opts.horizontal){
+        var y=pad.top+i*groupW+(di*(barW+2));
+        var bw=cw*val/maxV;
+        roundRect(ctx,pad.left,y,bw,barW,3);
+        ctx.fill();
+      } else {
+        var x=pad.left+i*groupW+(di*(barW+1));
+        var bh=ch*val/maxV;
+        roundRect(ctx,x,pad.top+ch-bh,barW,bh,3);
+        ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    });
+  });
+  // Labels
+  ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';
+  labels.forEach(function(lbl,i){
+    if(opts.horizontal){
+      ctx.textAlign='right';
+      ctx.fillText(lbl.length>8?lbl.slice(0,8):lbl,pad.left-5,pad.top+i*groupW+barW/2*(datasets.length)+4);
+    } else {
+      ctx.textAlign='center';
+      ctx.fillText(lbl,pad.left+i*groupW+groupW/2,pad.top+ch+14);
+    }
+  });
+}
+
+function drawDonutChart(id,labels,values,colors){
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||300;
+  canvas.height=wrap.offsetHeight||220;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  var cx=W/2,cy=H/2,R=Math.min(W,H)*0.38,r=R*0.55;
+  var total=values.reduce(function(s,v){return s+v;},0)||1;
+  var start=-Math.PI/2;
+  values.forEach(function(v,i){
+    var angle=2*Math.PI*v/total;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,R,start,start+angle);
+    ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.globalAlpha=0.9;
+    ctx.fill();
+    ctx.globalAlpha=1;
+    start+=angle;
+  });
+  // Donut hole
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.fillStyle='#181c27';ctx.fill();
+  // Center text
+  ctx.fillStyle='#e8eaf0';ctx.font='500 14px system-ui';ctx.textAlign='center';
+  ctx.fillText(values.length+' models',cx,cy+5);
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  if(w<0){x+=w;w=-w;}if(h<0){y+=h;h=-h;}
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+/* ══════════════════ REFRESH ALL ══════════════════ */
+function refreshAll(){
+  updateKPIs();
+  updateOvCharts();renderOvTable();
+  // Other tabs rendered on demand when switched to
+}
+
+/* ══════════════════ KPIs + ALERTS ══════════════════ */
+function updateKPIs(){
+  var eligible=D.filter(function(v){return !v.isSafety;});
+  var t=D.length,avg=avgD(eligible),a90=eligible.filter(function(v){return v.days>=90;}).length;
+  var val=D.reduce(function(s,v){return s+v.srp;},0);
+  var nw=D.filter(isNew).length;
+  document.getElementById('kpiTotal').textContent=t;
+  document.getElementById('kpiTotalSub').textContent=nw+' new vehicles';
+  var safetyCnt=D.filter(function(v){return v.isSafety;}).length;
+  document.getElementById('kpiAvg').textContent=safetyCnt;
+  document.getElementById('kpiAvgSub').textContent=safetyCnt?safetyCnt+' unit'+(safetyCnt>1?'s':'')+' cannot be sold':'\u2713 No safety units';
+  document.getElementById('kpi90').textContent=a90;
+  document.getElementById('kpi90Sub').textContent=a90?((a90/t*100).toFixed(0))+'% of inventory critical':'\u2713 None critical';
+  // Car of the Day — oldest available for sale unit (no safety campaign)
+  var sellable=D.filter(function(v){return !v.isSafety&&v.days>0;});
+  if(sellable.length){
+    sellable.sort(function(a,b){return b.days-a.days;});
+    var pick=sellable[0];
+    document.getElementById('cotdModel').textContent=pick.year+' '+pick.model;
+    document.getElementById('cotdSub').textContent=pick.modelFull;
+    document.getElementById('cotdDays').textContent=pick.days+'d on lot';
+    document.getElementById('cotdDays').style.display='inline';
+    document.getElementById('cotdStock').textContent=pick.stock;
+    document.getElementById('cotdStock').style.display='inline';
+    document.getElementById('cotdColor').textContent=pick.color;
+    document.getElementById('cotdColor').style.display='inline';
+  } else {
+    document.getElementById('cotdModel').textContent='No eligible units';
+    document.getElementById('cotdSub').textContent='All units have safety or receipt flags';
+  }
+}
+
+function updateAlerts(){
+  var s=document.getElementById('alertStrip');s.innerHTML='';
+  var safety=D.filter(function(v){return v.isSafety;});
+  var a90=D.filter(function(v){return v.days>=90&&!v.isSafety;});
+  var a60=D.filter(function(v){return v.days>=60&&v.days<90;});
+  var receipt=D.filter(function(v){return v.isReceipt;});
+  if(safety.length) s.innerHTML+='<div class="alert">\uD83D\uDED1 '+safety.length+' unit'+(safety.length>1?'s have':'has')+' a Safety Campaign \u2014 cannot be sold</div>';
+  if(a90.length) s.innerHTML+='<div class="alert">\u26A0 '+a90.length+' unit'+(a90.length>1?'s':'')+'aged 90+ days \u2014 price down recommended</div>';
+  if(a60.length) s.innerHTML+='<div class="alert alert-amber">\u25c8 '+a60.length+' unit'+(a60.length>1?'s':'')+' in 60\u201390 day range \u2014 review pricing</div>';
+  if(receipt.length) s.innerHTML+='<div class="alert alert-amber">\u25c8 '+receipt.length+' trade receipt unit'+(receipt.length>1?'s':'')+' on lot</div>';
+  if(!safety.length&&!a90.length&&!a60.length&&D.length) s.innerHTML='<div class="alert alert-green">\u2713 No critical issues \u2014 inventory health looks good</div>';
+}
+
+/* ══════════════════ OVERVIEW CHARTS ══════════════════ */
+function updateOvCharts(){
+  var bkts=[[0,15],[16,30],[31,45],[46,60],[61,90],[91,9999]];
+  var bl=['0-15','16-30','31-45','46-60','61-90','90+'];
+  var nD=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  drawBarChart('agingChart',bl,[{data:nD,color:'#3b82f6'}]);
+  // Aging bars
+  var bktColors=['#22c55e','#4ade80','#2dd4bf','#f59e0b','#fb923c','#ef4444'];
+  var bktLabels=['0\u201315 days','16\u201330','31\u201345','46\u201360','61\u201390','90+'];
+  var total=D.length||1;
+  var counts=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  var maxC=Math.max.apply(null,counts.concat([1]));
+  document.getElementById('agingBars').innerHTML=bkts.map(function(b,i){
+    return '<div class="arow"><span class="alabel">'+bktLabels[i]+'</span><div class="atrack"><div class="afill" style="width:'+Math.round(counts[i]/maxC*100)+'%;background:'+bktColors[i]+'"></div></div><span class="acount" style="color:'+bktColors[i]+'">'+counts[i]+'</span><span class="apct">'+Math.round(counts[i]/total*100)+'%</span></div>';
+  }).join('');
+}
+
+/* ══════════════════ TABLE BUILDERS ══════════════════ */
+function showTable(emptyId,tblId,hasData,filteredLen,totalLen,titleId,countId,titleText){
+  if(!hasData){
+    document.getElementById(emptyId).style.display='block';
+    document.getElementById(tblId).style.display='none';
+  } else {
+    document.getElementById(emptyId).style.display='none';
+    document.getElementById(tblId).style.display='table';
+  }
+  document.getElementById(titleId).textContent=titleText+' \u2014 '+filteredLen+' unit'+(filteredLen!==1?'s':'');
+  document.getElementById(countId).textContent=totalLen>filteredLen?'Showing '+filteredLen+' of '+totalLen:'';
+}
+
+function makeRow(v,maxD,showType){
+  var tr=document.createElement('tr');
+  tr.className=rowCls(v);
+  var cells='<td><span class="stock-tag">'+v.stock+'</span></td>';
+  cells+='<td><strong style="font-weight:500">'+v.year+' '+v.model+'</strong>'+statusBadge(v)+'<br><span style="font-size:11px;color:var(--muted)">'+v.modelFull+'</span></td>';
+
+  cells+='<td style="color:var(--muted)">'+v.color+'</td>';
+  cells+='<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.invoice)+'</td>';
+  cells+='<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.srp)+'</td>';
+  cells+='<td><span class="age-pill '+ageCls(v.days)+'">'+ageIcon(v.days)+' '+v.days+'d</span></td>';
+  cells+='<td>'+barHTML(v.days,maxD)+'</td>';
+  cells+='<td>'+actBtn(v.days)+'</td>';
+  tr.innerHTML=cells;
+  return tr;
+}
+
+function renderOvTable(){
+  var ar=(F.ovAge||'0-9999').split('-').map(Number);
+  var q=(document.getElementById('ovSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){
+    var t=isNew(v)||true;
+    var a=v.days>=ar[0]&&v.days<=ar[1];
+    var s=!q||[v.stock,v.model,v.modelFull,v.vin,v.color].join(' ').toLowerCase().indexOf(q)>=0;
+    return t&&a&&s;
+  });
+  data=applySortToData(data,'ov');
+  var maxD=Math.max.apply(null,data.map(function(v){return v.days;}).concat([60]));
+  showTable('ovEmpty','ovTbl',D.length>0,data.length,D.length,'ovTitle','ovCount','All Inventory');
+  var tbody=document.getElementById('ovBody');tbody.innerHTML='';
+  data.forEach(function(v){tbody.appendChild(makeRow(v,maxD,false));});
+}
+
+function updateNCharts(){
+  var nv=D.filter(isNew);
+  var byM={};nv.forEach(function(v){byM[v.model]=(byM[v.model]||0)+1;});
+  var mKeys=Object.keys(byM).sort(function(a,b){return byM[b]-byM[a];}).slice(0,8);
+  drawDonutChart('nMixChart',mKeys,mKeys.map(function(k){return byM[k];}),COLORS);
+  document.getElementById('nMixLeg').innerHTML=mKeys.map(function(k,i){return '<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:'+COLORS[i%COLORS.length]+';display:inline-block"></span>'+k+'</span>';}).join('');
+  var byMD={};nv.forEach(function(v){if(!byMD[v.model])byMD[v.model]={t:0,c:0};byMD[v.model].t+=v.days;byMD[v.model].c++;});
+  var mE=Object.entries(byMD).map(function(e){return{m:e[0],avg:Math.round(e[1].t/e[1].c)};}).sort(function(a,b){return b.avg-a.avg;}).slice(0,8);
+  drawBarChart('nDaysChart',mE.map(function(e){return e.m;}),[{data:mE.map(function(e){return e.avg;}),color:mE.map(function(e){return ageColor(e.avg);})}],{horizontal:true});
+  // KPIs
+  var nvElig=nv.filter(function(v){return !v.isSafety;});
+  var avg=avgD(nvElig),val=nv.reduce(function(s,v){return s+v.srp;},0),a60=nvElig.filter(function(v){return v.days>=60;}).length;
+  document.getElementById('nKpiTotal').textContent=nv.length||'—';
+  document.getElementById('nKpiSub').textContent=nv.length?Object.keys(byM).length+' model codes':'No new vehicles';
+  document.getElementById('nKpiAvg').textContent=nv.length?avg:'—';
+  document.getElementById('nKpiAvgSub').textContent=avg>60?'\u25b2 '+(avg-60)+'d over target':'\u2713 Within 60-day target';
+  document.getElementById('nKpi60').textContent=a60;
+  document.getElementById('nKpi60Sub').textContent=a60?'Review for markdown':'\u2713 None at risk';
+}
+
+function renderNTable(){
+  var ar=F.nAge==='all'?[0,9999]:F.nAge.split('-').map(Number);
+  var q=(document.getElementById('nSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){return isNew(v)&&v.days>=ar[0]&&v.days<=ar[1]&&(!q||[v.stock,v.model,v.modelFull,v.vin].join(' ').toLowerCase().indexOf(q)>=0);}).sort(function(a,b){return b.days-a.days;});
+  var maxD=Math.max.apply(null,data.map(function(v){return v.days;}).concat([60]));
+  showTable('nEmpty','nTbl',D.filter(isNew).length>0,data.length,D.filter(isNew).length,'nTitle','nCount','New Vehicles');
+  var tbody=document.getElementById('nBody');tbody.innerHTML='';
+  data.forEach(function(v){tbody.appendChild(makeRow(v,maxD,false));});
+}
+
+function updateAgCharts(){
+  var bkts=[[0,15],[16,30],[31,45],[46,60],[61,90],[91,9999]];
+  var bl=['0-15','16-30','31-45','46-60','61-90','90+'];
+  var counts=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  drawBarChart('agHeatChart',bl,[{data:counts,color:['#22c55e','#4ade80','#2dd4bf','#f59e0b','#fb923c','#ef4444']}]);
+  var a90=D.filter(function(v){return !v.isSafety&&v.days>=90;});
+  var a60=D.filter(function(v){return !v.isSafety&&v.days>=60&&v.days<90;});
+  var agingD=D.filter(function(v){return !v.isSafety;});
+  var oldest=agingD.length?Math.max.apply(null,agingD.map(function(v){return v.days;})):0;
+  var oldestV=agingD.find(function(v){return v.days===oldest;});
+  document.getElementById('agKpi90').textContent=a90.length||'0';
+  document.getElementById('agKpi90Sub').textContent=a90.length?a90.length+' unit'+(a90.length>1?'s need':' needs')+' action':'\u2713 None critical';
+  document.getElementById('agKpi60').textContent=a60.length||'0';
+  document.getElementById('agKpiOldest').textContent=oldest?oldest+'d':'—';
+  document.getElementById('agKpiOldestSub').textContent=oldestV?oldestV.year+' '+oldestV.model+' \xb7 '+oldestV.modelFull:'No data';
+}
+
+function renderAgTable(){
+  var minD=parseInt(F.agMin)||90;
+  var q=(document.getElementById('agSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){
+    var t=true;
+    var a=v.days>=minD&&!v.isSafety;
+    var s=!q||[v.stock,v.model,v.modelFull].join(' ').toLowerCase().indexOf(q)>=0;
+    return t&&a&&s;
+  });
+  data=applySortToData(data,'ag');
+  var hasData=D.length>0;
+  if(!hasData){document.getElementById('agEmpty').style.display='block';document.getElementById('agTbl').style.display='none';}
+  else if(!data.length){
+    document.getElementById('agEmpty').style.display='block';
+    document.getElementById('agEmpty').querySelector('.empty-title').textContent='No units aged '+minD+'+ days';
+    document.getElementById('agEmpty').querySelector('.empty-sub').textContent='Try lowering the threshold';
+    document.getElementById('agEmpty').querySelector('.btn-import').style.display='none';
+    document.getElementById('agTbl').style.display='none';
+  } else {
+    document.getElementById('agEmpty').style.display='none';
+    document.getElementById('agTbl').style.display='table';
+  }
+  document.getElementById('agTitle').textContent=minD+'+ Day Units \u2014 '+data.length+' found';
+  document.getElementById('agCount').textContent='Sorted by most aged';
+  var tbody=document.getElementById('agBody');tbody.innerHTML='';
+  data.forEach(function(v,i){
+    var tr=document.createElement('tr');
+    tr.className=rowCls(v);
+    var rankStyle=i===0?'color:#f87171;font-weight:600':i===1?'color:#fbbf24;font-weight:600':i===2?'color:#93c5fd;font-weight:600':'color:var(--muted)';
+    tr.innerHTML='<td style="'+rankStyle+'">'+(i+1)+'</td>'
+      +'<td><span class="stock-tag">'+v.stock+'</span></td>'
+      +'<td><strong style="font-weight:500">'+v.year+' '+v.model+'</strong>'+statusBadge(v)+'<br><span style="font-size:11px;color:var(--muted)">'+v.modelFull+'</span></td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.invoice)+'</td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.srp)+'</td>'
+      +'<td><span class="age-pill '+ageCls(v.days)+'">'+ageIcon(v.days)+' '+v.days+'d</span></td>'
+      +'<td>'+actBtn(v.days)+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* ══════════════════ SELL MODEL ══════════════════ */
+function renderSellModel(){
+  var minDays = parseInt(F.smMin)||0;
+  var q = (document.getElementById('smSearch').value||'').toLowerCase();
+  var excludeSafety = F.smExclude === 'safety';
+
+  // Build model+color groups
+  var groups = {};
+  D.forEach(function(v){
+    if(excludeSafety && v.isSafety) return;
+    var key = v.model + '||' + v.color;
+    if(!groups[key]) groups[key] = {
+      model: v.model,
+      modelFull: v.modelFull,
+      color: v.color,
+      units: [],
+      maxDays: 0,
+      avgDays: 0,
+      hasSafety: false,
+      hasReceipt: false
+    };
+    groups[key].units.push(v);
+    if(v.days > groups[key].maxDays) groups[key].maxDays = v.days;
+    if(v.isSafety) groups[key].hasSafety = true;
+    if(v.isReceipt) groups[key].hasReceipt = true;
+  });
+
+  // Compute avgDays per group
+  Object.values(groups).forEach(function(g){
+    g.avgDays = Math.round(g.units.reduce(function(s,v){return s+v.days;},0)/g.units.length);
+  });
+
+  // Filter
+  var list = Object.values(groups).filter(function(g){
+    var ageOk = g.maxDays >= minDays;
+    var searchOk = !q || (g.model+' '+g.modelFull+' '+g.color).toLowerCase().indexOf(q)>=0;
+    return ageOk && searchOk;
+  });
+
+  // Sort
+  list.sort(function(a,b){
+    if(F.smSort==='count') return b.units.length - a.units.length;
+    return b.maxDays - a.maxDays;
+  });
+
+  // KPIs
+  var oldest = list.length ? list[0] : null;
+  var c60 = list.filter(function(g){return g.maxDays>=60;}).length;
+  var c90 = list.filter(function(g){return g.maxDays>=90;}).length;
+  document.getElementById('smKpiCombos').textContent = list.length || '—';
+  document.getElementById('smKpiCombosSub').textContent = list.length ? 'model · color combinations' : 'No data';
+  document.getElementById('smKpiOldest').textContent = oldest ? oldest.maxDays+'d' : '—';
+  document.getElementById('smKpiOldestSub').textContent = oldest ? oldest.model+' · '+oldest.color : 'No data';
+  document.getElementById('smKpi60').textContent = c60;
+  document.getElementById('smKpi90').textContent = c90;
+
+  // Alerts
+  var alerts = document.getElementById('smAlerts');
+  alerts.innerHTML = '';
+  if(c90>0) alerts.innerHTML += '<div class="alert">⚠ '+c90+' model/color combo'+(c90>1?'s have':' has')+' units 90+ days — price down recommended</div>';
+  if(c60>0&&c90===0) alerts.innerHTML += '<div class="alert alert-amber">◈ '+c60+' combo'+(c60>1?'s':'')+' approaching 90 days — review pricing</div>';
+
+  // Build cards
+  var grid = document.getElementById('smGrid');
+  var empty = document.getElementById('smEmpty');
+
+  if(!D.length || !list.length){
+    empty.style.display = 'block';
+    if(!D.length){
+      empty.querySelector('.empty-title').textContent = 'No data yet';
+      empty.querySelector('.empty-sub').textContent = 'Import inventory to see the sell model view';
+    } else {
+      empty.querySelector('.empty-title').textContent = 'No combos match your filters';
+      empty.querySelector('.empty-sub').textContent = 'Try adjusting the minimum days or search';
+    }
+    // Remove any old cards
+    var old = grid.querySelectorAll('.sm-card');
+    old.forEach(function(el){el.remove();});
+    return;
+  }
+
+  empty.style.display = 'none';
+  var old = grid.querySelectorAll('.sm-card');
+  old.forEach(function(el){el.remove();});
+
+  list.forEach(function(g,idx){
+    var urgency = g.maxDays>=90?'crit':g.maxDays>=60?'warn':'ok';
+    var borderColor = urgency==='crit'?'rgba(34,197,94,.5)':urgency==='warn'?'rgba(245,158,11,.4)':'rgba(59,130,246,.25)';
+    var headerBg = urgency==='crit'?'rgba(34,197,94,.1)':urgency==='warn'?'rgba(245,158,11,.1)':'rgba(59,130,246,.08)';
+    var badgeColor = urgency==='crit'?'#4ade80':urgency==='warn'?'#fbbf24':'#93c5fd';
+    var actionLabel = urgency==='crit'?'⚡ Priority Unit':urgency==='warn'?'Review':'Monitor';
+    var actionCls = urgency==='crit'?'act-red':urgency==='warn'?'act-amber':'act-blue';
+    var rankLabel = idx===0?'#1 Priority':idx===1?'#2 Priority':idx===2?'#3 Priority':'';
+
+    // Build unit rows (show top 5 oldest units)
+    var sorted = g.units.slice().sort(function(a,b){return b.days-a.days;});
+    var unitRows = sorted.slice(0,5).map(function(v){
+      var flags = '';
+      if(v.isSafety) flags += '<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(239,68,68,.2);color:#f87171;margin-left:4px">Safety</span>';
+      if(v.isReceipt) flags += '<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(245,158,11,.2);color:#fbbf24;margin-left:4px">Receipt</span>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--muted)">'+v.stock+'</span>'
+        +'<div style="display:flex;align-items:center;gap:4px">'
+        +'<span style="font-size:11px;font-weight:500;color:'+ageColor(v.days)+'">'+v.days+'d</span>'
+        + flags
+        +'</div>'
+        +'</div>';
+    }).join('');
+    var moreCount = sorted.length - 5;
+    if(moreCount>0) unitRows += '<div style="font-size:11px;color:var(--muted);text-align:center;padding:5px 0">+'+moreCount+' more unit'+(moreCount>1?'s':'')+'</div>';
+
+    var card = document.createElement('div');
+    card.className = 'sm-card';
+    card.style.cssText = 'background:var(--surface);border:1px solid '+borderColor+';border-radius:var(--radius);overflow:hidden';
+
+    card.innerHTML =
+      // Header
+      '<div style="background:'+headerBg+';padding:12px 14px;border-bottom:1px solid '+borderColor+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+          +'<div>'
+            +'<div style="font-size:15px;font-weight:600;color:var(--text)">'+g.model+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+g.modelFull+'</div>'
+          +'</div>'
+          +(rankLabel?'<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:'+borderColor+';color:'+badgeColor+'">'+rankLabel+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:'+badgeColor+'">'+g.maxDays+'d</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Max age</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:var(--text)">'+g.avgDays+'d</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Avg age</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:var(--text)">'+g.units.length+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Units</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center;flex:1;min-width:60px">'
+            +'<div style="font-size:13px;font-weight:600;color:var(--text)">'+g.color+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Color</div>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      // Unit list
+      +'<div style="padding:8px 14px">'
+        +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Stock units</div>'
+        + unitRows
+      +'</div>'
+      // Footer
+      +'<div style="padding:10px 14px;border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:flex-end">'
+        +'<button class="'+actionCls+'" style="font-size:11px">'+actionLabel+'</button>'
+      +'</div>';
+
+    grid.appendChild(card);
+  });
+}
+
+
+function sortTable(tab, col){
+  if(SORT[tab].col===col){
+    SORT[tab].dir = SORT[tab].dir==='desc'?'asc':'desc';
+  } else {
+    SORT[tab].col=col;
+    SORT[tab].dir='desc';
+  }
+  // Update header classes
+  var tblId = tab==='ag'?'agTbl':tab+'Tbl';
+  var tbl = document.getElementById(tblId);
+  if(tbl){
+    tbl.querySelectorAll('th.sortable').forEach(function(th){
+      th.classList.remove('sort-asc','sort-desc');
+    });
+    var ths = tbl.querySelectorAll('th.sortable');
+    ths.forEach(function(th){
+      if((col==='year'&&th.textContent.indexOf('Year')>=0)||(col==='days'&&th.textContent.indexOf('Days')>=0)){
+        th.classList.add(SORT[tab].dir==='asc'?'sort-asc':'sort-desc');
+      }
+    });
+  }
+  if(tab==='ov') renderOvTable();
+  else if(tab==='n') renderNTable();
+  else if(tab==='u') renderUTable();
+  else if(tab==='ag') renderAgTable();
+}
+
+function applySortToData(data, tab){
+  var col=SORT[tab].col, dir=SORT[tab].dir;
+  return data.slice().sort(function(a,b){
+    var av = col==='year'?a.year:a.days;
+    var bv = col==='year'?b.year:b.days;
+    return dir==='asc'?(av-bv):(bv-av);
+  });
+}
+
+
+function doLogin(){
+  var pwd = document.getElementById('loginInput').value;
+  if(pwd === 'tumejorjugada26'){
+    document.getElementById('loginOverlay').style.display='none';
+    sessionStorage.setItem('mvp_auth','1');
+    refreshAll();
+  } else {
+    document.getElementById('loginError').style.display='block';
+    document.getElementById('loginInput').value='';
+    document.getElementById('loginInput').focus();
+  }
+}
+
+// Check if already logged in this session
+window.addEventListener('load', function(){
+  if(sessionStorage.getItem('mvp_auth')==='1'){
+    document.getElementById('loginOverlay').style.display='none';
+    refreshAll();
+  }
+});
+
+</script>
+</body>
+</html>
